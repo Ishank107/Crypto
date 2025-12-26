@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  # 1. Our custom Python App
+  market-exporter:
+    build: ./exporter
+    container_name: market-exporter
+    restart: unless-stopped
+    # vvv THIS IS THE NEW PART vvv
+    environment:
+      - PYTHONUNBUFFERED=1
+    # ^^^ THIS IS THE NEW PART ^^^
+    networks:
+      - market-net
+
+  # 2. Prometheus (Database)
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: market-prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9092:9090"
+    networks:
+      - market-net
+
+  # 3. Grafana (Visuals)
+  grafana:
+    image: grafana/grafana:latest
+    container_name: market-grafana
+    ports:
+      - "3002:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - market-net
+
+networks:
+  market-net:
+    driver: bridge
